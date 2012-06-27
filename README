@@ -1,0 +1,147 @@
+;; DEFINE-SYSTEM:
+;; 
+;; a function (not a macro!) for defining systems:
+;; 
+;; (ASD:DEFINE-SYSTEM name
+;;   :HOME-DIRECTORY directory 
+;;   :DIRECTORY directory
+;;   :MODULES list-of-modules
+;;   :USE-BIN-DIR t or nil (default: T)
+;;   :PACKAGE package (default: *package*)
+;;    )
+;;
+;; 
+;; The combination of the HOME-DIRECTORY and the DIRECTORY
+;; form the "root" of the system. Either or both of these
+;; can be used. The function (THIS-FILES-DIRECTORY) can
+;; be used to determine a system definition file's directory.
+;; To be portable, the HOME-DIRECTORY and DIRECTORY should be
+;; in list format (:ABSOLUTE .. ) or (:RELATIVE ...). If
+;; both HOME-DIRECTORY and DIRECTORY are defined, then the
+;; DIRECTORY should be RELATIVE to the HOME-DIRECTORY. The home
+;; directory can be overridden in the LOAD-SYSTEM, COMPILE-SYSTEM,
+;; etc. forms.
+;;
+;;A module is one of the following:
+;;
+;;  a file name with no extension. File names with extensions
+;;    are not guaranteed to work.
+;;    in which case the file is acted upon (ie, compiled, etc)
+;;
+;;  a file specification with the syntax
+;;    (:FILE :NAME name :TYPE type :DIRECTORY dir)
+;;    :TYPE and :DIRECTORY are optional. If :DIRECTORY is specified it
+;;    should be a 'relative directory list,' that is, of the form
+;;    '(:RELATIVE ...).  The file specification is merged with the root
+;;    directory of the system.  The file is acted upon (ie, compiled, etc);
+;; 
+;;  a system name with the syntax:
+;;    (:SYSTEM name)
+;;    in which case the submodules are acted upon;
+;; 
+;;  a system location
+;;    (:SYSTEM name location)
+;;    in which case the file at location is loaded, and then the system is
+;;    acted upon. The location has to have the same syntax as the file
+;;    specification described above;
+;;
+;;  a conditional module list
+;;    (name module+)
+;;    in which name is the name of the conditional module list, and name is
+;;    followed by any number of the allowed module specifications above.
+;;
+;;
+;; USE-BIN-DIR means to use a separate binary directory created,
+;; if necessary, at the same level as the system directory.
+;; The name of the system is implementation dependent, and can
+;; be retrieved with the function (BINARY-SUBDIRECTORY-NAME)
+;; and can be set with (SET-BINARY-SUBDIRECTORY-NAME).
+;;
+;;The files, etc. are loaded or compiled into PACKAGE.
+;; 
+;; 
+;; Examples:
+;; 
+;; perhaps in: CODE/LISP/UTILITIES/UTILITIES.SYSTEM
+;;(ASD:DEFINE-SYSTEM "UTILITIES"
+;;  :DIRECTORY (this-files-directory)
+;;  :MODULES
+;;  '("PIPES"
+;;    "SHOW"
+;;    "TEST")
+;;  :PACKAGE "UTILITIES")
+;;
+;; perhaps in: CODE/LISP/MEMORY/MEMORY.SYSTEM
+;;(ASD:DEFINE-SYSTEM "MEMORY"
+;;  :DIRECTORY (this-files-directory)
+;;  :MODULES
+;;  '("CLASS-DEFINITIONS"
+;;    "ACCESSORS"
+;;    "MACROS")
+;;  :PACKAGE "MEMORY")
+;; 
+;; perhaps in: CODE/LISP
+;; 
+;; (ASD:DEFINE-SYSTEM "TOP"
+;;   :DIRECTORY (this-files-directory)
+;;   :MODULES
+;;   '((:SYSTEM "UTILITIES" '(:DIRECTORY "UTILITIES" :NAME "UTILITIES" :TYPE "SYSTEM"))
+;;     (:SYSTEM "MEMORY" '(:DIRECTORY "MEMORY" :NAME "MEMORY" :TYPE "SYSTEM")))
+;;   )
+;;
+;; 
+;;(LOAD-SYSTEM name) ... loads system if it's not already loaded. 
+;;  binary files are loaded if they are newer than source files,
+;;  otherwise the source files are loaded.
+;; 
+;;(COMPILE-SYSTEM name)... compiles system
+;;
+;;Optional arguments are:
+;;
+;;(LOAD-SYSTEM name (force nil) (load-source nil) (verbose t) (test nil) (home-directory nil))
+;;  :force, if t, will load all files again
+;;  :load-source, if t, will load source files instead of binary files
+;;  :verbose, if t (default), will print messages along the way
+;;  :test, if t, will just print messages, not actually do anything
+;;  :home-directory, if specified, supercedes system's home directory
+;;
+;;(COMPILE-SYSTEM name (force nil) (recompile nil) (and-load? nil) (verbose t) (test nil) (home-directory nil))
+;;  :force, if t, will recompile source files newer than source files
+;;  :recompile, if t, will recompile every file
+;;  :and-load?, if t, will load the file after compiling it
+;;  :verbose, if t (default), will print messages along the way
+;;  :test, if t, will just print messages, not actually do anything
+;;  :home-directory, if specified, supercedes system's home directory
+;; 
+;; (EDIT-SYSTEM name) ... calls the system  editor on the files in system
+;;
+;; (COPY-SYSTEM name :output-directory output-directory-pathname)
+;;                    ... copies the _source_ files to output directory.
+;;
+;; Optional arguments:
+;; (COPY-SYSTEM name :output-directory output-directory-pathname (test nil) (verbose t) (home-directory nil))
+;;  :verbose, if t (default), will print messages along the way
+;;  :test, if t, will just print messages, not actually do anything
+;;  :home-directory, if specified, supercedes system's home directory
+;;
+;;(DEFINED-SYSTEMS) returns a list of defined systems.
+;;
+;;(REMOVE-SYSTEM name) removes system 
+;;
+;;(SYSTEM-NAMED name) finds system with this name.
+;;
+;;(FIND-SYSTEM name) same as SYSTEM-NAMED
+;;
+;; (UNSET-SYSTEM-STATE state name) "unsets" a particular system state
+;; to an unfinished state. For example, (UNSET-SYSTEM-STATE 'COMPILE name)
+;; informs the system that the system can be recompiled; similarly with
+;; (UNSET-SYSTEM-STATE 'LOAD name)
+;;
+;; The type of the typical source file is found in (SOURCE-FILE-TYPE),
+;; and be set with (SET-SOURCE-FILE-TYPE). It defaults to "lisp".
+;;
+;; There are a number of implementation dependencies in this file; if  you
+;; get an error of the type
+;; "Add Code here to implement..."
+;; this indicates  you've hit an implementation dependency.
+;; Sorry.
